@@ -38,8 +38,8 @@ open_minaj("path/to/gcam-core")      # loads gcamdata from that tree, once per s
 
 | Task | Command |
 |---|---|
-| Rebuild one XML after editing a CSV or a chunk file (save, then run) | `make_minaj("electricity_water.xml")` |
 | Build every XML file, or only those a configuration loads | `driver_minaj()`, `driver_minaj(config = "path/to/gcam-core/exe/configuration_ref.xml")` |
+| Rebuild one XML after editing a CSV or a chunk file (save, then run) | `make_minaj("electricity_water.xml")` |
 | See what would run and why | `plan_minaj("electricity_water.xml")`, `why_minaj("module_energy_L223.electricity")` |
 | Check the files a configuration loads | `status_minaj("path/to/gcam-core/exe/configuration_ref.xml")` |
 | Copy finished files into `xml/` | `promote_minaj("electricity_water.xml")` |
