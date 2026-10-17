@@ -1,0 +1,6 @@
+RESULT minaj open once: 8.8 s
+RESULT minaj nothing changed: 3.5 s
+RESULT minaj after constants edit (no reload): 6.8 s | re-sourced constants.R: TRUE | package reloaded: FALSE | chunks run 2, reused 85
+RESULT files changed by the edit: 6 of 6 
+RESULT minaj after switching back (no reload): 2.4 s | chunks run 0, reused 87
+RESULT back to the original files: TRUE 

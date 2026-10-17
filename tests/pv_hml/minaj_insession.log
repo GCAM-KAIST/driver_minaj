@@ -1,0 +1,7 @@
+RESULT minaj open once: 10.0 s
+RESULT minaj low+mid+high in one call: 13.7 s
+RESULT minaj low+mid+high again: 5.9 s
+RESULT low: drake == minaj: TRUE
+RESULT mid: drake == minaj: TRUE
+RESULT high: drake == minaj: TRUE
+RESULT mid == base electricity.xml: TRUE

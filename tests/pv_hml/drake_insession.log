@@ -1,0 +1,6 @@
+RESULT drake load_all once: 12.6 s
+RESULT drake low: 25.7 s
+RESULT drake mid: 10.8 s
+RESULT drake high: 10.4 s
+RESULT drake low+mid+high: 46.8 s
+RESULT drake back to base (restore + driver_drake): 9.8 s
