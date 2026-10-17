@@ -1,0 +1,2 @@
+inst/bin/pm text eol=lf
+*.sh text eol=lf

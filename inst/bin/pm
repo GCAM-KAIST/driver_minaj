@@ -1,0 +1,70 @@
+#!/bin/bash
+# pm: client for the persistent_minaj worker (no R start-up per call).
+#
+#   pm status                          tree, store, XML folder, sandbox
+#   pm stop                            stop the worker
+#   pm make <target>... [confirm=true] build XML files, data objects, CSV inputs or chunks; above
+#                                      minaj.server_ask_secs (default 300 s) of estimated runs it needs confirm=true
+#   pm plan <target>...                what would run, and why
+#   pm get <name> [n=5] [<column>=<value>...]
+#                                      one table: columns, ranges and the first n rows; <column>=<value> filters rows
+#                                      (not for columns named like an argument, e.g. value: send --body with a "filter" object)
+#   pm diff <name> [against=previous] [top=10]
+#                                      against=previous: the latest version make produced in this worker vs the
+#                                      one before it; against=base: sandbox vs tree; top: largest changes listed
+#   pm trace <name> [direction=upstream] [depth=6] [value=<number> [<column>=<value>...]]
+#                                      lineage (direction=upstream or downstream); value: rows holding that number
+#   pm downstream <name>...            chunks and XML files reached by an edit to these CSV inputs, data names
+#                                      or full chunk names
+#   pm variants <xml> <input> <variant>=<override>...
+#                                      e.g. pm variants electricity.xml energy/A23.globaltech_capacity_factor low=0.9 high=1.1
+#   pm try <input>=<override>... [clear=true]
+#                                      sandbox overrides used by make, plan, get and diff (make writes <stem>_override.xml);
+#                                      clear=true empties the sandbox first
+#
+#   <override>: a number (scales every year column, else the value column), a CSV file path (absolute, or
+#   relative to the folder the worker was started in), or a JSON list of row operations as in variant tables,
+#   e.g. '[{"op":"scale","value":1.1,"technology":"PV"}]'.
+#   After any command: --body '<json>' sends that JSON body as is; --raw prints only the JSON reply.
+#   PM_INFO: the worker file to read (default <store>/server/current.json with the default store,
+#   file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")); set it when the worker uses another store.
+[ $# -gt 0 ] || { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; exit 1; }
+if [ -n "$PM_INFO" ]; then INFO="$PM_INFO"
+else                                     # tools::R_user_dir("minaj", "cache"), as R computes it
+  if [ -n "$R_USER_CACHE_DIR" ]; then INFO="$R_USER_CACHE_DIR"
+  elif [ -n "$XDG_CACHE_HOME" ]; then INFO="$XDG_CACHE_HOME"
+  elif [ "$OS" = Windows_NT ]; then INFO="$LOCALAPPDATA/R/cache"
+  elif [ "$(uname -s)" = Darwin ]; then INFO="$HOME/Library/Caches/org.R-project.R"
+  else INFO="$HOME/.cache"; fi
+  if [ "$OS" = Windows_NT ] && command -v cygpath > /dev/null 2>&1; then INFO=$(cygpath -u "$INFO"); fi
+  INFO="$INFO/R/minaj/minaj_store/server/current.json"
+fi
+[ -f "$INFO" ] || { if [ -n "$PM_INFO" ]; then echo "pm: no persistent_minaj running ($INFO missing)" >&2; else echo "pm: no persistent_minaj running ($INFO missing; set PM_INFO if the worker uses another store)" >&2; fi; exit 2; }
+port=$(sed -n 's/.*"port": *\([0-9]*\).*/\1/p' "$INFO"); token=$(sed -n 's/.*"token": *"\([^"]*\)".*/\1/p' "$INFO")
+[ -n "$port" ] && [ -n "$token" ] || { echo "pm: cannot read port and token from $INFO" >&2; exit 2; }
+cmd="$1"; shift
+jstr() { local s="${1//\\/\\\\}"; s="${s//\"/\\\"}"; printf '"%s"' "$s"; }
+jval() { if [[ "$1" =~ ^-?[0-9]+([.][0-9]+)?([eE][-+]?[0-9]+)?$ || "$1" == true || "$1" == false || "$1" == null || "$1" == \[* || "$1" == \{* ]]; then printf '%s' "$1"; else jstr "$1"; fi; }
+raw=0; body=""; pos=(); kv=()
+while [ $# -gt 0 ]; do
+  case "$1" in --raw) raw=1 ;; --body) body="$2"; shift ;; *=*) kv+=("$1") ;; *) pos+=("$1") ;; esac; shift
+done
+if [ -z "$body" ]; then
+  known=" n against top direction depth value confirm clear "
+  fields=(); filt=()
+  case "$cmd" in
+    make|plan) t=""; for p in "${pos[@]}"; do t+="${t:+,}$(jstr "$p")"; done; fields+=("\"targets\":[$t]") ;;
+    downstream) t=""; for p in "${pos[@]}"; do t+="${t:+,}$(jstr "$p")"; done; fields+=("\"from\":[$t]") ;;
+    get|diff|trace) [ ${#pos[@]} -gt 0 ] && fields+=("\"name\":$(jstr "${pos[0]}")") ;;
+    variants) fields+=("\"xml\":$(jstr "${pos[0]}")"); v=""; for x in "${kv[@]}"; do v+="${v:+,}$(jstr "${x%%=*}"):{$(jstr "${pos[1]}"):$(jval "${x#*=}")}"; done; fields+=("\"variants\":{$v}"); kv=() ;;
+    try) s=""; rest=(); for x in "${kv[@]}"; do k="${x%%=*}"; if [ "$k" = clear ]; then rest+=("$x"); else s+="${s:+,}$(jstr "$k"):$(jval "${x#*=}")"; fi; done; [ -n "$s" ] && fields+=("\"set\":{$s}"); kv=("${rest[@]}") ;;
+  esac
+  for x in "${kv[@]}"; do k="${x%%=*}"; v="${x#*=}"
+    if [[ "$known" == *" $k "* ]]; then fields+=("$(jstr "$k"):$(jval "$v")"); else filt+=("$(jstr "$k"):$(jval "$v")"); fi
+  done
+  [ ${#filt[@]} -gt 0 ] && fields+=("\"filter\":{$(IFS=,; echo "${filt[*]}")}")
+  body="{$(IFS=,; echo "${fields[*]}")}"
+fi
+out=$(curl -s --max-time 7200 -H "X-Minaj-Token: $token" -H "Content-Type: application/json" -X POST "http://127.0.0.1:$port/$cmd" --data-binary "$body")
+[ -n "$out" ] || { echo "pm: no reply from persistent_minaj on port $port" >&2; exit 3; }
+if [ $raw = 1 ]; then echo "$out"; else echo "$out" | sed -n 's/^{"ok":[a-z]*,"summary":"\([^"]*\)".*/\1/p'; echo "$out"; fi
