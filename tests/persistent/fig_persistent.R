@@ -7,17 +7,17 @@ tools <- c("drake (fresh R session)", "minaj (fresh R session)", "persistent_min
 # from incelas_timing/incelas_test.log (load + driver totals), pv_hml/drake_insession.log and minaj_insession.log (load + three versions),
 # persistent/pm_tests.log (pm calls)
 d <- data.frame(task = rep(tasks, each = 3), tool = rep(tools, 5),
-                secs = c(20.9, 12.6, 8.3,   19.7, 10.3, 2.1,   NA, NA, 10.8,   59.4, 23.7, 10.4,   NA, NA, 0.3))
+                secs = c(33.3, 17.8, 6.2,   33.0, 14.7, 2.2,   NA, NA, 8.1,   44.7, 20.6, 6.2,   NA, NA, 0.3))
 d <- d[!is.na(d$secs), ]
 d$y <- (length(tasks) + 1 - match(d$task, tasks)) + c(0.22, 0, -0.22)[match(d$tool, tools)]
 p <- ggplot(d, aes(secs, y, colour = tool)) +
   geom_segment(aes(x = 0.2, xend = secs, yend = y), linewidth = 0.3) + geom_point(size = 1.4) +
-  geom_text(aes(label = ifelse(secs < 90, sprintf("%.1f s", secs), sprintf("%.1f min", secs / 60))), hjust = -0.25, size = 5.5 / .pt,
+  geom_text(aes(label = sprintf("%.1f s", secs)), hjust = -0.25, size = 5.5 / .pt,
             family = "Arial", show.legend = FALSE) +
-  scale_x_log10(breaks = c(0.3, 1, 3, 10, 30, 60, 180), labels = c("0.3 s", "1 s", "3 s", "10 s", "30 s", "1 min", "3 min"), limits = c(0.2, 200)) +
+  scale_x_log10(breaks = c(0.3, 1, 3, 10, 30, 100), labels = c("0.3", "1", "3", "10", "30", "100"), limits = c(0.2, 200)) +
   scale_y_continuous(breaks = rev(seq_along(tasks)), labels = tasks, expand = expansion(add = 0.5)) +
   scale_colour_manual(values = c("drake (fresh R session)" = "#E69F00", "minaj (fresh R session)" = "#56B4E9", "persistent_minaj (pm)" = "#0072B2"), breaks = tools) +
-  labs(x = "Wall-clock time per call (log scale)", y = NULL) +
+  labs(x = "Wall-clock time per call (s, log scale)", y = NULL) +
   theme_classic(base_size = 6, base_family = "Arial") +
   theme(axis.line = element_line(linewidth = 0.25), axis.ticks = element_line(linewidth = 0.25), axis.text = element_text(size = 5.5, colour = "black"),
         axis.title = element_text(size = 6), legend.text = element_text(size = 5.5), legend.title = element_blank(), legend.key.size = unit(2.5, "mm"),
@@ -28,7 +28,7 @@ for (dev in c("pdf", "png")) {
   print(p); invisible(dev.off())
 }
 writeLines(c("Fig. 3 | Cost of one edit for a caller that starts each command fresh, vanilla GCAM 9.1. drake (driver_drake(stop_after)) and minaj",
-  "(driver_minaj or variants_minaj) each run in a new R session, so package loading (6-13 s) is included; persistent_minaj answers through pm from a",
+  "(driver_minaj or variants_minaj) each run in a new R session, so package loading (8-12 s) is included; persistent_minaj answers through pm from a",
   "worker that keeps gcamdata loaded. Income elasticity: A32 industrial output elasticity edited (1.20 for drake/minaj, 1.23 for pm, both new",
   "values), five XML files rebuilt. constants.R: pm only, socioeconomics.GDP_DIGITS 0 -> 2, six XML files rebuilt without reloading gcamdata;",
   "the drake and minaj constants.R case is in Fig. 2b. PV: future PV and PV_storage capacity factors x0.9/1.0/1.1; drake = load + three driver_drake runs,",

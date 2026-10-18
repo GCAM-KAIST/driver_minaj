@@ -24,14 +24,15 @@ between full builds. It runs gcamdata's own chunks, CSV reader and XML writer, s
 
 ## Checked against driver_drake()
 
-GCAM 9.1 (tag `gcam-v9.1`), all runs on the same Windows 11 computer:
+GCAM 9.1 (tag `gcam-v9.1`), one run each, all on the same computer (Intel Core Ultra 7 258V, 32 GB RAM, Windows 11 in the "best power efficiency" power mode, R 4.4.2), one after another, with no other computing jobs running:
 
 | | `driver_drake()` | minaj |
 |---|---|---|
+| Full build of all 221 XML files from an empty cache or store (driver call; drake's load_all(), 11.5 s, and minaj's package loading and open_minaj(), 16.2 s, not counted) | 1930 s | 1790 s |
 | Same XML files | | 221 of 221 byte-identical |
-| Income-elasticity CSV edit, rebuild its 5 XML files (driver call; package loading, about 7 s for both, not counted) | 14.2 s (`stop_after`) | 6.0 s |
-| `constants.R` edit in an open session | 232 s; cache wiped and rebuilt with the old value, still wrong after load_all() | 6.8 s, 2 chunks, no reload |
-| PV capacity factor low/mid/high XML files | 46.8 s, three runs | 13.7 s, one call |
+| Income-elasticity CSV edit, rebuild its 5 XML files (driver call; package loading, 8-9 s for both, not counted) | 25.2 s (`stop_after`) | 8.9 s |
+| `constants.R` edit in an open session | 326 s; cache cleared and rebuilt with the previous value; after load_all() the files still had the previous value | 8.2 s, 2 chunks, no reload |
+| PV capacity factor low/mid/high XML files | 36.9 s, three runs | 11.5 s, one call |
 
 ## Install
 

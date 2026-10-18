@@ -1,21 +1,21 @@
 == 1. income elasticity 1.12 -> 1.23 (A32.inc_elas_output; a value not used before)
-pm make socioeconomics_incelas_ssp1.xml socioeconomics_        3.7 s  socioeconomics_incelas_ssp1.xml unchanged; socioeconomics_incelas_ssp2.xml unchanged; socioeconomics_incelas_ssp3.xml unchanged; socioeconomics_incela
-pm make socioeconomics_incelas_ssp1.xml socioeconomics_        8.3 s  socioeconomics_incelas_ssp1.xml converted; socioeconomics_incelas_ssp2.xml converted; socioeconomics_incelas_ssp3.xml converted; socioeconomics_incela
+pm make socioeconomics_incelas_ssp1.xml socioeconomics_        4.1 s  socioeconomics_incelas_ssp1.xml unchanged; socioeconomics_incelas_ssp2.xml unchanged; socioeconomics_incelas_ssp3.xml unchanged; socioeconomics_incela
+pm make socioeconomics_incelas_ssp1.xml socioeconomics_        6.2 s  socioeconomics_incelas_ssp1.xml converted; socioeconomics_incelas_ssp2.xml converted; socioeconomics_incelas_ssp3.xml converted; socioeconomics_incela
 pm diff socioeconomics_incelas_ssp2.xml                        0.3 s  socioeconomics_incelas_ssp2.xml: 6 of 7 XML tables changed
-pm make socioeconomics_incelas_ssp1.xml socioeconomics_        2.1 s  socioeconomics_incelas_ssp1.xml copied from store; socioeconomics_incelas_ssp2.xml copied from store; socioeconomics_incelas_ssp3.xml copied from stor
+pm make socioeconomics_incelas_ssp1.xml socioeconomics_        2.2 s  socioeconomics_incelas_ssp1.xml copied from store; socioeconomics_incelas_ssp2.xml copied from store; socioeconomics_incelas_ssp3.xml copied from stor
 == 2. constants.R: socioeconomics.GDP_DIGITS 0 -> 2 (a value not used before)
-pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml        1.7 s  socioeconomics_SSP1.xml unchanged; socioeconomics_SSP2.xml unchanged; socioeconomics_SSP3.xml unchanged; socioeconomics_SSP4.xml unchanged; socioecono
-pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml       10.8 s  socioeconomics_SSP1.xml converted; socioeconomics_SSP2.xml converted; socioeconomics_SSP3.xml converted; socioeconomics_SSP4.xml converted; socioecono
-pm diff socioeconomics_SSP2.xml                                0.8 s  socioeconomics_SSP2.xml: 1 of 27 XML tables changed
-pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml        4.2 s  socioeconomics_SSP1.xml copied from store; socioeconomics_SSP2.xml copied from store; socioeconomics_SSP3.xml copied from store; socioeconomics_SSP4.x
+pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml        1.8 s  socioeconomics_SSP1.xml unchanged; socioeconomics_SSP2.xml unchanged; socioeconomics_SSP3.xml unchanged; socioeconomics_SSP4.xml unchanged; socioecono
+pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml        8.1 s  socioeconomics_SSP1.xml converted; socioeconomics_SSP2.xml converted; socioeconomics_SSP3.xml converted; socioeconomics_SSP4.xml converted; socioecono
+pm diff socioeconomics_SSP2.xml                                0.4 s  socioeconomics_SSP2.xml: 1 of 27 XML tables changed
+pm make socioeconomics_SSP1.xml socioeconomics_SSP2.xml        2.1 s  socioeconomics_SSP1.xml copied from store; socioeconomics_SSP2.xml copied from store; socioeconomics_SSP3.xml copied from store; socioeconomics_SSP4.x
 == 3. PV capacity factor low / mid / high (same three CSV files as the drake test)
-pm variants --body {"xml":"electricity.xml","variants":       10.4 s  electricity_low.xml copied from store; electricity_mid.xml unchanged (= base); electricity_high.xml copied from store
-pm variants --body {"xml":"electricity.xml","variants":        4.3 s  electricity_low.xml unchanged; electricity_mid.xml unchanged (= base); electricity_high.xml unchanged
+pm variants --body {"xml":"electricity.xml","variants":        6.2 s  electricity_low.xml copied from store; electricity_mid.xml copied from store (= base); electricity_high.xml copied from store
+pm variants --body {"xml":"electricity.xml","variants":        3.1 s  electricity_low.xml unchanged; electricity_mid.xml unchanged (= base); electricity_high.xml unchanged
    low: same file as drake's: yes
    mid: same file as drake's: yes
    high: same file as drake's: yes
 == 4. sandbox: PV future capacity factor x1.1 without touching any file
 pm try --body {"set":{"energy/A23.globaltech_capacity_f        0.2 s  sandbox active: energy/A23.globaltech_capacity_factor (make writes <stem>_override.xml; files in the tree are not edited)
-pm make electricity.xml                                        1.1 s  electricity_override.xml unchanged | ran 0, reused 33, read 0 CSVs
-pm diff L223.StubTechCapFactor_elec against=base               1.4 s  L223.StubTechCapFactor_elec: 1024 rows changed (capacity.factor max 10.0%), 0 added, 0 removed; 32 regions; years 2025-2100
-pm try clear=true                                              0.3 s  sandbox empty
+pm make electricity.xml                                        3.0 s  electricity_override.xml converted | ran 2, reused 31, read 0 CSVs
+pm diff L223.StubTechCapFactor_elec against=base               1.1 s  L223.StubTechCapFactor_elec: 1024 rows changed (capacity.factor max 10.0%), 0 added, 0 removed; 32 regions; years 2025-2100
+pm try clear=true                                              0.2 s  sandbox empty

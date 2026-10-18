@@ -114,9 +114,10 @@ Set with `options()` before the first `open_minaj()` of the session; `minaj.stor
 ## Results
 
 On GCAM 9.1, all 221 XML files are byte-identical to those of `driver_drake()`. Rebuilds after small edits took
-6.0 s (`driver_drake()`: 14.2 s) for an income-elasticity CSV, 6.8 s (232 s, with the old value kept) for a
-`constants.R` value, and 13.7 s (46.8 s) for low / mid / high PV capacity factors. Figures, captions and scripts
-are in `tests/`.
+8.9 s (`driver_drake()`: 25.2 s) for an income-elasticity CSV, 8.2 s (326 s, with the previous value kept) for a
+`constants.R` value, and 11.5 s (36.9 s) for low / mid / high PV capacity factors. A full build from scratch took
+1790 s (1930 s). One run each, on one computer, with no other computing jobs running. Figures, captions and the
+edit-test scripts are in `tests/`.
 
 minaj runs JGCRI's gcamdata (https://github.com/JGCRI/gcam-core); its interface follows rOpenSci's drake
 (https://github.com/ropensci/drake).

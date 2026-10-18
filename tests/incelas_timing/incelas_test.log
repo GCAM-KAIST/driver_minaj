@@ -1,9 +1,9 @@
 original drake files: f7dddb61d1a81b5d29662950f7345015 a7ac0c3c6fca7786e3d6215c0b7d1257 351c07c43a5185a52392791cf87eb183 2bd46c0fc4e31065ac74037457fd6cd2 75575bc1cc2e72d4ac11562cf88e09c1 
 edit: 1 line changed (industrial income elasticity at 3 GJ/person: 1.12 -> 1.20)
-RESULT drake edit load=6.7 driver=14.2 total=20.9
-RESULT minaj edit load=6.7 driver=6.0 total=12.6
+RESULT drake edit load=8.1 driver=25.2 total=33.3
+RESULT minaj edit load=8.9 driver=8.9 total=17.8
 after edit: drake == minaj: yes; changed from original: yes
 restored CSV: byte-identical
-RESULT drake switchback load=6.1 driver=13.5 total=19.7
-RESULT minaj switchback load=6.8 driver=3.4 total=10.3
+RESULT drake switchback load=11.9 driver=21.1 total=33.0
+RESULT minaj switchback load=9.7 driver=5.0 total=14.7
 after switching back: drake == minaj: yes; back to original: yes
