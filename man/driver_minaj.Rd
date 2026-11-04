@@ -10,8 +10,11 @@ driver_minaj(
   return_inputs_of = stop_before,
   return_outputs_of = stop_after,
   return_data_names = NULL,
-  write_xml = TRUE,
+  return_data_map_only = FALSE,
+  write_outputs = FALSE,
+  write_xml = !return_data_map_only,
   xmldir = NULL,
+  outdir = NULL,
   config = NULL,
   quiet = FALSE,
   user_modifications = NULL,
@@ -25,10 +28,19 @@ driver_minaj(
 
 \item{return_inputs_of, return_outputs_of, return_data_names}{As in driver_drake().}
 
-\item{write_xml}{Write XML files (default TRUE).}
+\item{return_data_map_only}{Return only the data map (as driver(): name, output, precursors, title, units,
+comments and flags, one row per CSV input and per chunk output, ordered by name and output).}
+
+\item{write_outputs}{Write each table to `<outdir>/<name>.csv` as driver() does. A file whose content is
+current is not written again; the folder is not cleared.}
+
+\item{write_xml}{Write XML files (default TRUE, FALSE with return_data_map_only).}
 
 \item{xmldir}{Folder for XML files (default: the folder set in open_minaj, xml_minaj/ in the gcamdata folder).
 A relative path is taken from the working directory.}
+
+\item{outdir}{Folder for the CSV files (default: the tree's OUTPUTS_DIR, outputs/ in the gcamdata folder). A
+relative path is taken from the working directory.}
 
 \item{config}{Optional GCAM configuration: build only the gcamdata XML files it loads.}
 
@@ -38,12 +50,12 @@ A relative path is taken from the working directory.}
 
 \item{ask}{Ask before starting when the estimated time exceeds option minaj.ask_secs (default 120 s).}
 
-\item{...}{Other driver_drake() arguments (such as return_data_map_only, return_plan_only, or arguments
-for drake::make); ignored, with a warning.}
+\item{...}{Other driver_drake() arguments (such as return_plan_only, or arguments for drake::make); ignored,
+with a warning.}
 }
 \value{
-Invisibly, a named list of the requested data (empty when nothing was requested), or invisibly
-  NULL when the run is declined.
+Invisibly, a named list of the requested data (empty when nothing was requested), the data map with
+  return_data_map_only, or invisibly NULL when the run is declined.
 }
 \description{
 With no arguments, builds every XML file of the tree (or, with config, the gcamdata XML files a GCAM
@@ -51,4 +63,7 @@ configuration loads). stop_before, stop_after and the return_* arguments work as
 only the chunks upstream of stop_after (or of stop_before's inputs) run, and the requested data are
 returned as a named list of tables. Results still current from earlier runs are reused, so after the
 first build only what changed runs. Unlike driver_drake(), a failing XML does not stop the others.
+write_outputs and return_data_map_only work as in driver(), with the tree's own save_chunkdata() and
+tibbelize_outputs(), on the tables of the chunks the call covers (all, those upstream of stop_after or of
+stop_before's inputs, or those the configuration's XML files need).
 }

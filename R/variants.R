@@ -13,7 +13,7 @@
 #'   data frame / CSV path with columns variant, input, op (scale, add or set), value, and optionally
 #'   column (default: every year column, else value; several separated by ;) plus filter columns named
 #'   like the table's columns (e.g. region, technology; empty or * = all rows; several values separated
-#'   by ;). Columns note, family, mode and file are ignored.
+#'   by ;). Columns note, family, mode and file are ignored. Relative paths are taken from the working directory.
 #' @param dest Folder for the variant files (default: variants/ in the minaj XML folder). A relative path
 #'   is taken from the working directory.
 #' @param ask Ask before starting when the estimated time exceeds option minaj.ask_secs (default 120 s).

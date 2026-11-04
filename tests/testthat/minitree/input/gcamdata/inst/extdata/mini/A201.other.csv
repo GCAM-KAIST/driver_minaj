@@ -1,0 +1,10 @@
+# File: A201.other.csv
+# Title: Share-weights of another sector
+# Units: unitless
+# Source: made up for the minaj tests
+# Column types: cccn
+# ----------
+region,supplysector,subsector,share.weight
+North,cooling,electricity,1
+North,cooling,gas,0.5
+South,cooling,electricity,1

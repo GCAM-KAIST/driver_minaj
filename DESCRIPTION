@@ -1,6 +1,6 @@
 Package: minaj
 Title: Run 'gcamdata' One Chunk or One XML at a Time
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("KAIST IAM Group", role = c("aut", "cre", "cph"), email = "hmcjeon@kaist.ac.kr")
 Description: Runs 'gcamdata' chunks and writes single GCAM input XML files, or
     low/mid/high sets of one file, from an R session without rebuilding
@@ -12,8 +12,9 @@ URL: https://github.com/GCAM-KAIST/driver_minaj
 BugReports: https://github.com/GCAM-KAIST/driver_minaj/issues
 Encoding: UTF-8
 Depends: R (>= 4.1)
-Imports: digest, httpuv, jsonlite, pkgload, stats, tibble, tools, utils
-Suggests: drake
+Imports: callr, digest, httpuv, jsonlite, pkgload, ps, stats, tibble, tools, utils, xml2
+Suggests: drake, testthat (>= 3.0.0)
+Config/testthat/edition: 3
 SystemRequirements: Java (8 or later) to write XML files; bash and curl for
     the pm client
 Config/roxygen2/version: 8.1.0

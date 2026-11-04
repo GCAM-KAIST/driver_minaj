@@ -20,5 +20,9 @@ A data frame, one row per XML file: xml, results ("current" or "stale"), chunks_
 }
 \description{
 With a GCAM configuration, checks the exact gcamdata XML files that configuration loads (paths resolved
-from the configuration's folder). Otherwise checks the given files (default: all) in `where`.
+from the configuration's folder). Otherwise checks the given files (default: all) in `where`. With a configuration,
+it also prints a line for each add-on the configuration loads that addon_minaj() wrote with the open store (add-ons
+are recognised by its records; one written with another store is not reported): universal or
+configuration-specific, current or stale (files loaded before its base file changed since it was written), or not
+loaded directly after its base file.
 }

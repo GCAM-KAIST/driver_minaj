@@ -1,0 +1,11 @@
+# File: A100.base.csv
+# Title: Output by region and sector
+# Units: EJ
+# Source: made up for the minaj tests
+# Column types: ccnnn
+# ----------
+region,sector,2015,2020,2025
+North,heat,10,11,12
+North,power,20,21,22
+South,heat,5,6,7
+South,power,8,9,10

@@ -1,0 +1,9 @@
+##, Note: comment lines need to have a comma somewhere in them (there is no comment character)
+##, Lines copied from inst/extdata/mi_headers/ModelInterface_headers.txt of gcamdata (GCAM 9.1)
+
+Subsector, world/+{name}region, region/+{name}supplysector, supplysector/+{name}subsector, scenario, scenario/world
+
+SubsectorShrwtFllt, world/+{name}region, region/+{name}supplysector, supplysector/+{name}subsector, subsector/+{year;fillout=1}share-weight, subsector/+share-weight, scenario/world, scenario
+
+StubTechCoef, world/+{name}region, region/+{name}supplysector, supplysector/+{name}subsector, subsector/+{name}stub-technology, stub-technology/+{year}period, period/+{name}minicam-energy-input, minicam-energy-input/+coefficient, minicam-energy-input/+market-name, scenario, scenario/world
+

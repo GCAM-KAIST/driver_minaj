@@ -1,0 +1,11 @@
+# File: A200.coef.csv
+# Title: Input coefficients by technology
+# Units: EJ/EJ
+# Source: made up for the minaj tests
+# Column types: ccccn
+# ----------
+sector,subsector,technology,minicam.energy.input,coefficient
+heat,gas,gas boiler,gas,1.2
+heat,electricity,heat pump,elect_td_bld,0.4
+power,gas,gas turbine,gas,2.1
+power,coal,coal plant,coal,2.6

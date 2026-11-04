@@ -17,8 +17,10 @@ save_rds <- function(x, path, level = nm_opt("compress", 1L)) {
 }
 
 move_into_place <- function(tmp, path) {
+  lp <- .Platform$OS.type == "windows" && nchar(normalizePath(path, mustWork = FALSE)) >= 260
   for (i in 1:20) {
     if (suppressWarnings(file.rename(tmp, path))) return(invisible(TRUE))
+    if (lp) stop("could not write ", path, " (path of 260 characters or more)")
     Sys.sleep(0.1 * i)
   }
   stop("could not write ", path, " (file in use?)")

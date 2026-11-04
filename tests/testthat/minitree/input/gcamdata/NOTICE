@@ -1,0 +1,3 @@
+A made-up gcamdata tree for the minaj tests. inst/extdata/ModelInterface/CSVToXML.jar and the header lines in
+inst/extdata/mi_headers/ModelInterface_headers.txt are copied from gcamdata (GCAM 9.1, Copyright Battelle Memorial
+Institute, Educational Community License 2.0). R/xml.R, R/utils.R and R/driver.R follow gcamdata's code, shortened.

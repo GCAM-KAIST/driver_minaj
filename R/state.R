@@ -8,11 +8,12 @@ horizon_flag <- function() toupper(Sys.getenv("GCAM_EXTEND_HORIZON", "FALSE")) =
 
 #' Open a gcamdata tree for this R session
 #'
-#' Loads gcamdata from the tree with pkgload::load_all (once per session) and reads or builds the
-#' chunk graph. All later calls work on this tree.
+#' Loads gcamdata from the tree with pkgload::load_all and reads or builds the chunk graph. All later calls
+#' work on this tree. Calling it again for the same tree and store picks up saved edits without reloading.
 #' @param tree GCAM tree (folder holding input/gcamdata) or the gcamdata folder itself.
 #' @param store Folder for stored results, shared by all trees (default: option minaj.store, else
-#'   file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")). Created if missing.
+#'   file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")). Created if missing. Another store than the one in
+#'   use opens the tree again with that store.
 #' @param dest Folder (relative to the gcamdata folder, or absolute) where make_minaj writes XML files
 #'   (default: option minaj.dest, else "xml_minaj").
 #' @return Invisibly, the list info_minaj() returns.
@@ -26,25 +27,28 @@ open_minaj <- function(tree, store = nm_opt("store", file.path(tools::R_user_dir
   if (!file.exists(file.path(root, "DESCRIPTION"))) stop("no gcamdata package found at ", root)
   root <- normalizePath(root, "/")
   loaded <- if ("gcamdata" %in% loadedNamespaces()) normalizePath(getNamespaceInfo("gcamdata", "path"), "/", mustWork = FALSE) else NA
-  same_session <- identical(loaded, root) && identical(.nm$root, root) && !is.null(.nm$rfiles) && identical(.nm$ns, asNamespace("gcamdata"))
+  dir.create(store, recursive = TRUE, showWarnings = FALSE)
+  same_session <- identical(loaded, root) && identical(.nm$root, root) && !is.null(.nm$rfiles) && identical(.nm$ns, asNamespace("gcamdata")) &&
+    identical(.nm$store, normalizePath(store, "/"))                            # another store: open again
   flag_ok <- !identical(loaded, root) || {
     f <- get0("modeltime.EXTEND_HORIZON", envir = asNamespace("gcamdata"), inherits = FALSE)
     is.null(f) || identical(isTRUE(f), horizon_flag())
   }
   if (same_session && flag_ok) {                       # reopening: pick up edits saved since the last call
     .nm$dest <- dest
+    ensure_java()
     with_dir(root, sync_code())
     return(invisible(info_minaj()))
   }
   if (!is.na(loaded)) pkgload::unload("gcamdata")
-  message("minaj: loading gcamdata from ", root, " (once per session)")
+  message("minaj: loading gcamdata from ", root)
   with_dir(root, suppressMessages(pkgload::load_all(root, quiet = TRUE, helpers = FALSE, attach_testthat = FALSE)))
   if (!identical(normalizePath(getNamespaceInfo("gcamdata", "path"), "/"), root)) stop("gcamdata is loaded from another folder")
   if (!is.null(.nm$state_dir)) try(save_findex(), silent = TRUE)
   .nm$root <- root
   .nm$tree <- normalizePath(dirname(dirname(root)), "/")
   .nm$ns <- asNamespace("gcamdata")
-  .nm$store <- normalizePath(store, "/", mustWork = FALSE)
+  .nm$store <- normalizePath(store, "/")
   .nm$dest <- dest
   .nm$tree_id <- tree_id(root)
   .nm$state_dir <- file.path(.nm$store, "trees", .nm$tree_id)
@@ -106,11 +110,12 @@ leave <- function(restore) { try(save_findex(), silent = TRUE); restore() }
 
 ensure_java <- function() {
   if (nzchar(Sys.which("java"))) return(invisible(TRUE))
-  cands <- c(nm_opt("java_bin", character(0)),
-             Sys.glob("C:/Program Files/RedHat/java-1.8.0-openjdk*/bin"),
-             Sys.glob("C:/Program Files/Eclipse Adoptium/*/bin"),
-             Sys.glob("C:/Program Files/Java/*/bin"))
-  cands <- cands[file.exists(file.path(cands, "java.exe"))]
+  jh <- Sys.getenv("JAVA_HOME")
+  cands <- c(nm_opt("java_bin", character(0)), if (nzchar(jh)) file.path(jh, "bin"),
+             Sys.glob(file.path(rep(c("C:/Program Files", "C:/Program Files (x86)"), each = 6),
+                                c("Eclipse Adoptium/*", "Java/*", "Microsoft/jdk*", "Zulu/*", "RedHat/java-*", "Amazon Corretto/*"), "bin")),
+             Sys.glob("/Library/Java/JavaVirtualMachines/*/Contents/Home/bin"), Sys.glob("/usr/lib/jvm/*/bin"))
+  cands <- cands[file.exists(file.path(cands, "java.exe")) | file.exists(file.path(cands, "java"))]
   if (!length(cands)) { warning("minaj: java not found; XML files cannot be written"); return(invisible(FALSE)) }
   Sys.setenv(PATH = paste(cands[1], Sys.getenv("PATH"), sep = .Platform$path.sep))
   invisible(TRUE)

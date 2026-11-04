@@ -7,22 +7,28 @@
 persistent_minaj(
   tree,
   port = NULL,
-  store = nm_opt("store", file.path(tools::R_user_dir("minaj", "cache"), "minaj_store"))
+  store = nm_opt("store", file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")),
+  mcp = FALSE
 )
 }
 \arguments{
 \item{tree}{GCAM tree (folder holding input/gcamdata) or the gcamdata folder itself.}
 
-\item{port}{TCP port on 127.0.0.1 (default: a free one).}
+\item{port}{TCP port on 127.0.0.1 (default: a free one). Not used with `mcp = TRUE`.}
 
 \item{store}{Store folder (default: option minaj.store, else
 file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")).}
+
+\item{mcp}{Serve the Model Context Protocol on standard input and output instead of HTTP.}
 }
 \value{
 Invisibly TRUE, once stopped.
 }
 \description{
-Blocks until `pm stop`, so run it in its own R process. Answers `pm` commands over HTTP on 127.0.0.1
-and writes the port and a token to <store>/server/current.json and <store>/server/<tree>_<id>.json,
-where `pm` reads them.
+Keeps gcamdata loaded in one R process and answers commands until stopped, so run it in its own R
+process. By default it answers `pm` commands over HTTP on 127.0.0.1 and writes the port and a token to
+<store>/server/current.json and <store>/server/<tree>_<id>.json, where `pm` reads them; it stops on
+`pm stop`. With `mcp = TRUE` it is an MCP server on standard input and output instead, with the tools
+status, make, plan, get, diff, trace, downstream, variants, addon and try (the `pm` commands); it stops
+when the client closes its input.
 }

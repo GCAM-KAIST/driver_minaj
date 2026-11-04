@@ -1,0 +1,8 @@
+Package: gcamdata
+Title: Made-up gcamdata Tree for the minaj Tests
+Version: 0.0.1
+Description: A few chunks, CSV inputs and XML files laid out as in gcamdata, so
+    that minaj can be tested without a GCAM tree.
+License: ECL-2.0
+Encoding: UTF-8
+Imports: tibble

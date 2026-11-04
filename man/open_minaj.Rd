@@ -14,7 +14,8 @@ open_minaj(
 \item{tree}{GCAM tree (folder holding input/gcamdata) or the gcamdata folder itself.}
 
 \item{store}{Folder for stored results, shared by all trees (default: option minaj.store, else
-file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")). Created if missing.}
+file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")). Created if missing. Another store than the one in
+use opens the tree again with that store.}
 
 \item{dest}{Folder (relative to the gcamdata folder, or absolute) where make_minaj writes XML files
 (default: option minaj.dest, else "xml_minaj").}
@@ -23,6 +24,6 @@ file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")). Created if missi
 Invisibly, the list info_minaj() returns.
 }
 \description{
-Loads gcamdata from the tree with pkgload::load_all (once per session) and reads or builds the
-chunk graph. All later calls work on this tree.
+Loads gcamdata from the tree with pkgload::load_all and reads or builds the chunk graph. All later calls
+work on this tree. Calling it again for the same tree and store picks up saved edits without reloading.
 }

@@ -3,6 +3,7 @@
 #
 #   pm status                          tree, store, XML folder, sandbox
 #   pm stop                            stop the worker
+#   pm help                            this usage (also pm -h, pm --help)
 #   pm make <target>... [confirm=true] build XML files, data objects, CSV inputs or chunks; above
 #                                      minaj.server_ask_secs (default 300 s) of estimated runs it needs confirm=true
 #   pm plan <target>...                what would run, and why
@@ -18,17 +19,23 @@
 #                                      or full chunk names
 #   pm variants <xml> <input> <variant>=<override>...
 #                                      e.g. pm variants electricity.xml energy/A23.globaltech_capacity_factor low=0.9 high=1.1
+#   pm addon <xml> [<input>=<override>...] [config=<path>] [dest=<folder>] [confirm=true]
+#                                      <stem>_addon.xml: only what the overrides (default: the sandbox) change, to load directly
+#                                      after the base file; config: a GCAM configuration that loads it; needs confirm=true as make
+#                                      e.g. pm addon electricity.xml energy/A23.globaltech_capacity_factor=1.1
 #   pm try <input>=<override>... [clear=true]
-#                                      sandbox overrides used by make, plan, get and diff (make writes <stem>_override.xml);
+#                                      sandbox overrides used by make, plan, get, diff and addon (make writes <stem>_override.xml);
 #                                      clear=true empties the sandbox first
 #
 #   <override>: a number (scales every year column, else the value column), a CSV file path (absolute, or
-#   relative to the folder the worker was started in), or a JSON list of row operations as in variant tables,
+#   relative to the folder the worker was started in, as are config and dest), or a JSON list of row operations as in variant tables,
 #   e.g. '[{"op":"scale","value":1.1,"technology":"PV"}]'.
 #   After any command: --body '<json>' sends that JSON body as is; --raw prints only the JSON reply.
-#   PM_INFO: the worker file to read (default <store>/server/current.json with the default store,
-#   file.path(tools::R_user_dir("minaj", "cache"), "minaj_store")); set it when the worker uses another store.
-[ $# -gt 0 ] || { awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; exit 1; }
+#   PM_INFO: the worker file to read. Default: <store>/server/current.json, written by the worker started last on the
+#   default store, file.path(tools::R_user_dir("minaj", "cache"), "minaj_store"), which pm works out from its own shell
+#   (R_USER_CACHE_DIR, XDG_CACHE_HOME), not from .Renviron or .Rprofile. For a worker on another store, or started before
+#   another worker on the same store, set it to that worker's <store>/server/<tree>_<id>.json.
+case "$1" in ""|-h|--help|help) awk 'NR > 1 && /^#/ { sub(/^# ?/, ""); print; next } NR > 1 { exit }' "$0"; [ -n "$1" ]; exit $? ;; esac
 if [ -n "$PM_INFO" ]; then INFO="$PM_INFO"
 else                                     # tools::R_user_dir("minaj", "cache"), as R computes it
   if [ -n "$R_USER_CACHE_DIR" ]; then INFO="$R_USER_CACHE_DIR"
@@ -58,6 +65,10 @@ if [ -z "$body" ]; then
     get|diff|trace) [ ${#pos[@]} -gt 0 ] && fields+=("\"name\":$(jstr "${pos[0]}")") ;;
     variants) fields+=("\"xml\":$(jstr "${pos[0]}")"); v=""; for x in "${kv[@]}"; do v+="${v:+,}$(jstr "${x%%=*}"):{$(jstr "${pos[1]}"):$(jval "${x#*=}")}"; done; fields+=("\"variants\":{$v}"); kv=() ;;
     try) s=""; rest=(); for x in "${kv[@]}"; do k="${x%%=*}"; if [ "$k" = clear ]; then rest+=("$x"); else s+="${s:+,}$(jstr "$k"):$(jval "${x#*=}")"; fi; done; [ -n "$s" ] && fields+=("\"set\":{$s}"); kv=("${rest[@]}") ;;
+    addon) [ ${#pos[@]} -gt 0 ] && fields+=("\"xml\":$(jstr "${pos[0]}")"); s=""; rest=()
+           for x in "${kv[@]}"; do k="${x%%=*}"
+             case "$k" in confirm) rest+=("$x") ;; config|dest) fields+=("$(jstr "$k"):$(jstr "${x#*=}")") ;; *) s+="${s:+,}$(jstr "$k"):$(jval "${x#*=}")" ;; esac
+           done; [ -n "$s" ] && fields+=("\"override\":{$s}"); kv=("${rest[@]}") ;;
   esac
   for x in "${kv[@]}"; do k="${x%%=*}"; v="${x#*=}"
     if [[ "$known" == *" $k "* ]]; then fields+=("$(jstr "$k"):$(jval "$v")"); else filt+=("$(jstr "$k"):$(jval "$v")"); fi
@@ -67,4 +78,4 @@ if [ -z "$body" ]; then
 fi
 out=$(curl -s --max-time 7200 -H "X-Minaj-Token: $token" -H "Content-Type: application/json" -X POST "http://127.0.0.1:$port/$cmd" --data-binary "$body")
 [ -n "$out" ] || { echo "pm: no reply from persistent_minaj on port $port" >&2; exit 3; }
-if [ $raw = 1 ]; then echo "$out"; else echo "$out" | sed -n 's/^{"ok":[a-z]*,"summary":"\([^"]*\)".*/\1/p'; echo "$out"; fi
+if [ $raw = 1 ]; then echo "$out"; else echo "$out" | sed -En 's/^\{"ok":[a-z]*,"summary":"(([^"\\]|[\\].)*)".*/\1/p' | sed -e 's/[\\]"/"/g' -e 's#[\\]/#/#g'; echo "$out"; fi

@@ -12,13 +12,13 @@ bin <- function(v) {
   ifelse(rel < 1e-9, "Numbers differ < 1e-9", ifelse(rel < 1e-4, "Numbers differ 1e-9 to 0.01%", "Numbers differ > 0.01%"))))
 }
 lev <- c("Byte-identical", "Same content, formatting only", "Numbers differ < 1e-9", "Numbers differ 1e-9 to 0.01%", "Numbers differ > 0.01%")
-b <- rbind(data.frame(cmp = "minaj vs drake", cat = bin(cmp$minaj_vs_drake)), data.frame(cmp = "JGCRI release vs drake", cat = bin(cmp$jgcri_vs_drake)))
+b <- rbind(data.frame(cmp = "driver_minaj() vs driver_drake()", cat = bin(cmp$minaj_vs_drake)), data.frame(cmp = "JGCRI release vs driver_drake()", cat = bin(cmp$jgcri_vs_drake)))
 b <- as.data.frame(table(cmp = b$cmp, cat = factor(b$cat, levels = lev))); b <- b[b$Freq > 0, ]
-b$cmp <- factor(b$cmp, levels = c("JGCRI release vs drake", "minaj vs drake")); b$cat <- factor(b$cat, levels = rev(lev))
-# measured: wall-clock seconds of the driver call for a full build of all 221 XML files, same computer, one after the other,
-#   no other jobs running (package loading not included): driver_drake() at its default settings from an empty cache;
-#   driver_minaj() from an empty store; logged to 0.1 min, shown rounded to 10 s
-a <- data.frame(tool = factor(c("drake (driver_drake)", "minaj"), levels = c("minaj", "drake (driver_drake)")), secs = c(1930, 1790))
+b$cmp <- factor(b$cmp, levels = c("JGCRI release vs driver_drake()", "driver_minaj() vs driver_drake()")); b$cat <- factor(b$cat, levels = rev(lev))
+# measured: wall-clock seconds of the driver call for a full build of all 221 XML files, same computer, one after the other
+#   on the same night (2026-11-04), desktop programs open, about 11 GB of memory free at the start (package loading not
+#   included): driver_drake() at its default settings from an empty cache; driver_minaj() 0.2.0 from an empty store
+a <- data.frame(tool = factor(c("driver_drake()", "driver_minaj()"), levels = c("driver_minaj()", "driver_drake()")), secs = c(3412, 2215))
 oi <- c("Byte-identical" = "#0072B2", "Same content, formatting only" = "#56B4E9", "Numbers differ < 1e-9" = "#009E73",
         "Numbers differ 1e-9 to 0.01%" = "#E69F00", "Numbers differ > 0.01%" = "#D55E00")
 th <- theme_classic(base_size = 6, base_family = "Arial") +
@@ -27,12 +27,12 @@ th <- theme_classic(base_size = 6, base_family = "Arial") +
         plot.tag = element_text(size = 8, face = "bold"), plot.margin = margin(2, 4, 2, 2, "mm"))
 pa <- ggplot(a, aes(secs, tool, fill = tool)) + geom_col(width = 0.55) +
   geom_text(aes(label = sprintf("%.0f s", secs)), hjust = -0.15, size = 5.5 / .pt, family = "Arial") +
-  scale_fill_manual(values = c("drake (driver_drake)" = "#E69F00", "minaj" = "#0072B2"), guide = "none") +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.2))) + labs(x = "Full build of all 221 XML files from scratch (s)", y = NULL, tag = "a") + th
+  scale_fill_manual(values = c("driver_drake()" = "#E69F00", "driver_minaj()" = "#0072B2"), guide = "none") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.2))) + labs(x = "Full build of all 221 XML files from an empty store or cache (s)", y = NULL, tag = "a") + th
 pb <- ggplot(b, aes(Freq, cmp, fill = cat)) + geom_col(width = 0.55, colour = "white", linewidth = 0.2) +
   geom_text(aes(label = Freq), position = position_stack(vjust = 0.5), size = 5.5 / .pt, family = "Arial", colour = "white") +
   scale_fill_manual(values = oi, breaks = lev) + scale_x_continuous(breaks = seq(0, 221, 50), expand = expansion(mult = c(0, 0.02))) +
-  labs(x = "XML files (number)", y = NULL, tag = "b") + th + theme(legend.position = "bottom") + guides(fill = guide_legend(nrow = 2, byrow = TRUE))
+  labs(x = "XML files (number)", y = NULL, tag = "b") + th + theme(legend.position = "bottom") + guides(fill = guide_legend(nrow = 3, byrow = TRUE))
 w <- 180 / 25.4; h <- 80 / 25.4
 for (dev in c("pdf", "png")) {
   f <- file.path("tests", paste0("minaj_vanilla91.", dev))

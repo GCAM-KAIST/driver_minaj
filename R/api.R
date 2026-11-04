@@ -14,6 +14,7 @@
 make_minaj <- function(..., override = list(), dest = NULL, ask = interactive()) {
   targets <- c(...)
   if (!is.null(dest) && grepl("^([A-Za-z]:)?[/\\\\]", dest) == FALSE) dest <- file.path(getwd(), dest)
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   dest <- if (is.null(dest)) dest_dir() else dest_dir(dest)
   p <- ask_plan(targets, override, ask)
@@ -38,10 +39,13 @@ make_one <- function(x, ctx, dest, file = NULL, override = FALSE) {
   h <- value_hash(x, ctx)
   if (kind != "xml") return(data.frame(target = x, kind = kind, status = "ok", file = NA))
   if (is.null(file)) file <- file.path(dest, if (override) sub("[.]xml$", "_override.xml", x) else x)
-  st <- write_xml(x, h, file)
-  if (st != "unchanged") manifest_add(dirname(file), data.frame(time = format(Sys.time()), file = basename(file), xml = x, xml_object = h,
-                                                                md5 = file_md5(file), tree_head = tree_head(),
-                                                                override = paste(names(ctx$over), collapse = " "), how = st))
+  if (is.null(ctx$head)) ctx$head <- tree_head()
+  st <- write_xml(x, h, file, after = function(st) {
+    if (st != "unchanged") manifest_add(dirname(file), data.frame(time = format(Sys.time()), file = basename(file), xml = x, xml_object = h,
+                                                                  md5 = file_md5(file), tree_head = ctx$head,
+                                                                  override = paste(names(ctx$over), collapse = " "), how = st))
+    st
+  })
   data.frame(target = x, kind = kind, status = st, file = file)
 }
 
@@ -98,6 +102,7 @@ fmt_secs <- function(s) if (s < 90) sprintf("%.1f s", s) else if (s < 5400) spri
 #'   secs (estimated seconds), why (reason per chunk) and ctx (the planning context, for internal use).
 #' @export
 plan_minaj <- function(..., override = list()) {
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   p <- plan_targets(c(...), override)
   if (!length(p$chunks) && !length(p$reads)) { message("minaj: nothing to run; all stored results are current"); return(invisible(p)) }
@@ -127,6 +132,7 @@ why_minaj <- function(chunk) {
 #' @return The table, or invisibly NULL when the run is declined.
 #' @export
 get_minaj <- function(name, override = list(), ask = interactive()) {
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   if (is.null(ask_plan(name, override, ask))) return(invisible(NULL))
   obj_get(value_hash(name, new_ctx(override)))[[1]]
@@ -148,6 +154,7 @@ chunk_inputs_data <- function(ch, ctx) {
 #' @return Invisibly, a named list of the chunk's outputs, or invisibly NULL when the run is declined.
 #' @export
 run_minaj <- function(chunk, override = list(), force = FALSE, ask = interactive()) {
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   ch <- chunk_name(chunk)
   if (is.null(ask_plan(.nm$by_chunk[[ch]], override, ask))) return(invisible(NULL))
@@ -168,6 +175,7 @@ run_minaj <- function(chunk, override = list(), force = FALSE, ask = interactive
 #' @return Invisibly, `all_data`, or invisibly NULL when the run is declined.
 #' @export
 inputs_minaj <- function(chunk, override = list(), envir = globalenv(), ask = interactive()) {
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   ch <- chunk_name(chunk)
   if (is.null(ask_plan(.nm$by_chunk[[ch]], override, ask))) return(invisible(NULL))
@@ -187,6 +195,7 @@ inputs_minaj <- function(chunk, override = list(), envir = globalenv(), ask = in
 #' @return Invisibly, the chunk's outputs (not stored), or invisibly NULL when the run is declined.
 #' @export
 debug_minaj <- function(chunk, override = list(), ask = interactive()) {
+  override <- lapply(override, function(o) if (is.character(o) && length(o) == 1) user_path(o) else o)   # paths from the working directory
   restore <- enter(); on.exit(leave(restore))
   ch <- chunk_name(chunk)
   if (is.null(ask_plan(.nm$by_chunk[[ch]], override, ask))) return(invisible(NULL))
@@ -198,7 +207,11 @@ debug_minaj <- function(chunk, override = list(), ask = interactive()) {
 #' Are the XML files current?
 #'
 #' With a GCAM configuration, checks the exact gcamdata XML files that configuration loads (paths resolved
-#' from the configuration's folder). Otherwise checks the given files (default: all) in `where`.
+#' from the configuration's folder). Otherwise checks the given files (default: all) in `where`. With a configuration,
+#' it also prints a line for each add-on the configuration loads that addon_minaj() wrote with the open store (add-ons
+#' are recognised by its records; one written with another store is not reported): universal or
+#' configuration-specific, current or stale (files loaded before its base file changed since it was written), or not
+#' loaded directly after its base file.
 #' @param config Path to a GCAM configuration file.
 #' @param files XML file names to check when config is NULL (default: all XML files of the tree).
 #' @param where Folder holding the files when config is NULL (default: the open_minaj destination). A relative
@@ -233,6 +246,35 @@ status_minaj <- function(config = NULL, files = NULL, where = NULL) {
                est = fmt_secs(sum(vapply(ch, est_secs, numeric(1)))), path = f)
   })
   rows <- do.call(rbind, rows)
+  if (!is.null(config)) {                                                    # add-ons it loads: directly after their base file; earlier files unchanged
+    cc <- tryCatch(config_components(config), error = function(e) { message("minaj: add-ons in ", basename(config), " not checked: ", conditionMessage(e)); NULL })
+    if (!is.null(cc)) {
+      ar <- list.files(dirname(dirname(rec_path("addon", "00"))), "[.]rds$", recursive = TRUE, full.names = TRUE)
+      ar <- Filter(function(r) is.list(r) && identical(r$source, "addon") && is.numeric(r$result$size), lapply(ar, function(p) tryCatch(readRDS(p), error = function(e) NULL)))
+      cp <- c(cc$path, cc$batch); ct <- c(cc$text, cc$batch); gone <- character(0)   # batch files after the components, in listed order
+      for (i in which(file.size(cp) %in% vapply(ar, function(r) as.numeric(r$result$size), 0))) {   # by size first, then md5
+        m <- file_md5(cp[i]); hit <- Filter(function(r) identical(r$md5, m), ar)
+        if (!length(hit)) next
+        hit <- hit[order(vapply(hit, function(r) as.numeric(r$date), 0))]; r <- hit[[length(hit)]]; f <- ct[i]
+        g <- cp[seq_len(i - 1L)]; g <- setdiff(unique(g[!file.exists(g)]), gone); gone <- c(gone, g)
+        for (x in g) message("minaj: ", basename(config), " lists ", x, ", which does not exist; GCAM stops when it cannot open a component")
+        if (i < 2L || !identical(file_md5(cp[i - 1L]), r$base_md5)) { message("minaj: ", f, ": add-on to ", r$xml, ", not loaded directly after that base file (or the base file changed)"); next }
+        if (any(vapply(hit, function(r) is.null(r$result$prefix_md5), NA))) { message("minaj: ", f, ": universal add-on to ", r$xml, ", current"); next }
+        pm <- vapply(cp[seq_len(i - 2L)], file_md5, "")
+        if (any(vapply(hit, function(r) identical(unname(pm), unname(r$result$prefix_md5)), NA))) {
+          message(sprintf("minaj: %s: configuration-specific add-on to %s, current (the %d %s)", f, r$xml, length(pm),
+                          if (length(pm) == 1L) "file loaded before the base file is unchanged" else "files loaded before the base file are unchanged")); next
+        }
+        q <- r$result$prefix_md5; pu <- unname(pm); qu <- unname(q)
+        ch <- which(vapply(seq_len(max(length(pu), length(qu))), function(j) !identical(pu[j], qu[j]), NA))
+        bn <- basename(ifelse(ch <= length(pm), names(pm)[ch], names(q)[ch]))
+        if (length(pu) != length(qu) && length(x <- c(names(pm)[!pu %in% qu], names(q)[!qu %in% pu]))) bn <- basename(x)   # files added or removed: those not in the other list
+        bn <- unique(bn)
+        message(sprintf("minaj: %s: configuration-specific add-on to %s, stale: %d file(s) loaded before the base file changed since it was written (%s); run addon_minaj() with config = \"%s\" again",
+                        f, r$xml, length(bn), paste(c(head(bn, 3), if (length(bn) > 3) "..."), collapse = ", "), config))
+      }
+    }
+  }
   message(sprintf("minaj: %d XML checked%s: results current %d, stale %d; files current %d, differ %d, missing %d, unknown %d", nrow(rows),
                   if (is.null(config)) paste(" in", where) else paste(" from", basename(config)),
                   sum(rows$results == "current"), sum(rows$results == "stale"), sum(rows$file == "current"), sum(rows$file == "differs"),
